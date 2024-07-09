@@ -81,7 +81,11 @@ public class StudentController {
 
         student.setName(studentDto.getName());
         student.setSurname(studentDto.getSurname());
-        student.setGrades(getAvaragesOfGrades(studentDto.getGrades()));
+
+        List<Grade> grades = student.getGrades();
+        grades.addAll(studentDto.getGrades());
+
+        student.setGrades(getAvaragesOfGrades(grades));
 
         return studentRepository.save(student);
     }
