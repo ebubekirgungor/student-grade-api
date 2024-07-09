@@ -27,13 +27,16 @@ public class Student {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String stdNumber;
+    private long id;
 
     @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "surname", nullable = false)
     private String surname;
+
+    @Column(name = "stdNumber", unique = true, nullable = false)
+    private String stdNumber;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "grades", columnDefinition = "jsonb", nullable = false)
