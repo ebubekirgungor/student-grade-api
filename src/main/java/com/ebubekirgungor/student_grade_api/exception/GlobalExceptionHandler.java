@@ -22,6 +22,17 @@ public class GlobalExceptionHandler {
                 .body(body);
     }
 
+    @ExceptionHandler({ StudentNotFoundException.class })
+    public ResponseEntity<Map<String, String>> handleStudentNotFoundException(
+            StudentNotFoundException exception) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", exception.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(body);
+    }
+
     @ExceptionHandler({ RuntimeException.class })
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException exception) {
         Map<String, String> body = new HashMap<>();

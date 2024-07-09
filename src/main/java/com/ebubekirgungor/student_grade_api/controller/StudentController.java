@@ -6,12 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ebubekirgungor.student_grade_api.dto.StudentDto;
 import com.ebubekirgungor.student_grade_api.exception.StudentAlreadyExistsException;
+import com.ebubekirgungor.student_grade_api.exception.StudentNotFoundException;
 import com.ebubekirgungor.student_grade_api.model.Student;
 import com.ebubekirgungor.student_grade_api.model.Student.Grade;
 import com.ebubekirgungor.student_grade_api.repository.StudentRepository;
@@ -23,18 +27,11 @@ public class StudentController {
     @Autowired
     private StudentRepository studentRepository;
 
-    @PostMapping
-    public Student createStudent(@RequestBody Student newStudent) {
-
-        var existingStudent = studentRepository.findByStdNumber(newStudent.getStdNumber());
-
-        if (existingStudent != null) {
-            throw new StudentAlreadyExistsException("Student with given number is already exists");
-        }
+    private List<Grade> getAvaragesOfGrades(List<Grade> grades) {
 
         Map<String, List<Double>> gradesMap = new HashMap<>();
 
-        for (Grade grade : newStudent.getGrades()) {
+        for (Grade grade : grades) {
             List<Double> cloneGrade = gradesMap.get(grade.getCode());
 
             if (cloneGrade != null) {
@@ -47,17 +44,45 @@ public class StudentController {
             }
         }
 
-        List<Grade> grades = new ArrayList<>();
+        List<Grade> newGrades = new ArrayList<>();
 
         for (String gradeCode : gradesMap.keySet()) {
             Grade newGrade = new Grade();
             newGrade.setCode(gradeCode);
             newGrade.setValue(gradesMap.get(gradeCode).stream().mapToDouble(d -> d).average().orElse(0.0));
-            grades.add(newGrade);
+            newGrades.add(newGrade);
         }
 
-        newStudent.setGrades(grades);
+        return newGrades;
+    }
+
+    @PostMapping
+    public Student createStudent(@RequestBody Student newStudent) {
+
+        var existingStudent = studentRepository.findByStdNumber(newStudent.getStdNumber());
+
+        if (existingStudent != null) {
+            throw new StudentAlreadyExistsException("Student with given number is already exists");
+        }
+
+        newStudent.setGrades(getAvaragesOfGrades(newStudent.getGrades()));
 
         return studentRepository.save(newStudent);
+    }
+
+    @PutMapping("/{stdNumber}")
+    public Student updateStudent(@PathVariable String stdNumber, @RequestBody StudentDto studentDto) {
+
+        Student student = studentRepository.findByStdNumber(stdNumber);
+
+        if (student == null) {
+            throw new StudentNotFoundException("Student with given number cannot found");
+        }
+
+        student.setName(studentDto.getName());
+        student.setSurname(studentDto.getSurname());
+        student.setGrades(getAvaragesOfGrades(studentDto.getGrades()));
+
+        return studentRepository.save(student);
     }
 }
